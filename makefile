@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS= -I -g -lstdc++ -std=c++11
 
-scanner: main.cpp scanner.cpp scanner.hpp character.hpp token.hpp
+scanner: main.cpp scanner.cpp scanner.hpp character.hpp token.hpp parser.cpp parser.hpp
 	$(CC) -o $@ $^ $(CFLAGS)
 
 clean:

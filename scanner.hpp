@@ -17,6 +17,7 @@
 #include <vector>
 #include <algorithm>
 #include <unistd.h>
+
 std::vector<token> testScanner(std::string filename);
 void cleanVector(std::vector<token>& tks);
 void printTokenVector(std::vector<token> &tks);

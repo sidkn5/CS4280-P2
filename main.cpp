@@ -9,7 +9,8 @@
  */
 
 #include "scanner.hpp"
-
+#include "parser.hpp"
+static token temp;
 
 int main(int argc, char* argv[]){
 
@@ -17,7 +18,7 @@ int main(int argc, char* argv[]){
 	std::ifstream file;
 	std::ofstream createdFile;
 	std::string userInput = "";
-	std::vector<token> allTokens;
+	
 	
 	if (argc > 2) {
 		printf("ERROR: Incorrect use of the program.\n");
@@ -29,7 +30,11 @@ int main(int argc, char* argv[]){
 		file.open(filename);
 		if (file) {
 			std::cout << "Opening and working with the file...\n";
-			testScanner(filename);
+			//testScanner(filename);
+			//allTokens = testScanner(filename);
+			//printTokenVector(allTokens);
+			getAllTokens(filename);
+			parser();
 		}
 		else {
 			std::cout << "The file does not exist! Terminating...\n";

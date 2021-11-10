@@ -5,8 +5,10 @@
 #ifndef PARSER_HPP
 #define PARSER_HPP
 #include "scanner.hpp"
+#include "token.hpp"
 
-void scanner(int index);		//holds all the tokens and returns the token that is being worked on
+void getAllTokens(std::string filename);
+token scanner();		//holds all the tokens and returns the token that is being worked on
 void parser();
 void program();
 void block();
@@ -29,6 +31,6 @@ void label();
 void gotoFunc();
 
 
-void error();
+void error(token errorTk, int expectedToken);
 
 #endif

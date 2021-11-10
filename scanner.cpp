@@ -31,7 +31,7 @@ std::string keywords[] = {
 	"start", "stop", "loop", "while", "for", "label", "exit", "listen", "talk", "program", "if", "then", "assign", "declare", "jump", "else"
 };
 
-
+//std::string tokenNames[]
 std::string tokenNames[] = {
 	"HolderTk", "IDTk", "INTEGERTk", "WSTk", "EQUALTk", "EQEQTk", "GREATERTHANTk", "LESSTHANTk", "COLONTk",
 	"COLONEQTk", "PLUSTk", "MINUSTk", "MULTIPLYTk", "DIVIDETk", "MODULUSTk", "DOTTk", "LEFTPARENTK", 
@@ -112,6 +112,10 @@ void cleanVector(std::vector<token>& tks) {
 		if (tks[i].type == HOLDERTK || tks[i].type == WSTK || tks[i].tokenString == "") {
 			//since we considered WS as a tk to help with the FSA TABLE our vector will
 			//have WStks but we don't need it so delete them
+			tks.erase(tks.begin() + i);
+			i--;
+		}
+		if (tks[tks.size()].lineNum == tks[i].lineNum && tks[i].type != EOFTK) {
 			tks.erase(tks.begin() + i);
 			i--;
 		}
