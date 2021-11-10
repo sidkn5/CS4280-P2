@@ -72,7 +72,7 @@ void block() {
 	if (tk.type == STARTTK) {
 		tk = scanner();
 		vars();
-		stat();
+		stats();
 		if (tk.type == STOPTK) {
 			tk = scanner();
 			return;
@@ -82,6 +82,7 @@ void block() {
 		}
 	}
 	else {
+		std::cout << "error here \n";
 		error(tk, STOPTK);
 	}
 }
@@ -107,20 +108,19 @@ void vars() {
 						vars();
 					}
 					else {
-						error(tk, SEMICOLONTK);	//semicolon
-						//error(tk, HOLDERTK);
+						error(tk, SEMICOLONTK);	//expected semicolon
 					}
 				}
 				else {
-					error(tk, INTEGERTK);	//integer
+					error(tk, INTEGERTK);	//expected integer
 				}
 			}
 			else {
-				error(tk, EQUALTK);		//equal 
+				error(tk, EQUALTK);		//expected equal 
 			}
 		}
 		else {
-			error(tk, IDTK);	//identifier
+			error(tk, IDTK);	//expected identifier
 		}
 	}
 	else {
@@ -222,7 +222,8 @@ void stats() {
 void mStat() {
 	
 	std::cout << "mstat called \n";
-	if (tk.type == LISTENTK || tk.type == TALKTK) {
+	if (tk.type == LISTENTK || tk.type == TALKTK || tk.type == STARTTK || tk.type == IFTK || tk.type == WHILETK 
+		|| tk.type == ASSIGNTK || tk.type == JUMPTK || tk.type == LABELTK) {
 		stat();
 		mStat();
 	}
@@ -235,66 +236,124 @@ void mStat() {
 void stat() {
 	std::cout << "stat called \n";
 	if (tk.type == LISTENTK) {
-		//tk = scanner();
+		tk = scanner();
 		in();
-		//tk = scanner();
-		//std::cout << "[" << expectedTokens[tk.type] << ", \"" << tk.tokenString
+		
+		//std::cout << "[2" << expectedTokens[tk.type] << ", \"" << tk.tokenString
 		//	<< "\", line " << tk.lineNum << ":" << tk.charNum << "]" << std::endl;
-
-		std::cout << "SOme phrase";
 		if (tk.type == SEMICOLONTK) {
-			std::cout << "Got here\n";
 			tk = scanner();
+			
 			return;
 		}
 		else {
-			std::cout << "Error here\n";
 			error(tk, SEMICOLONTK);
 		}
 	}
 	else if (tk.type == TALKTK) {
 		tk = scanner();
 		out();
+
+		if (tk.type == SEMICOLONTK) {
+			tk = scanner();
+
+			return;
+		}
+		else {
+			error(tk, SEMICOLONTK);
+		}
 	} 
 	else if (tk.type == STARTTK) {
-		tk = scanner();
+		//tk = scanner();
 		block();
+
 	}
 	else if (tk.type == IFTK) {
 		tk = scanner();
 		ifStat();
+
+		if (tk.type == SEMICOLONTK) {
+			tk = scanner();
+
+			return;
+		}
+		else {
+			error(tk, SEMICOLONTK);
+		}
 	}
 	else if (tk.type == WHILETK) {
 		tk = scanner();
 		loop();
+
+		if (tk.type == SEMICOLONTK) {
+			tk = scanner();
+
+			return;
+		}
+		else {
+			error(tk, SEMICOLONTK);
+		}
 	}
 	else if (tk.type == ASSIGNTK) {
 		tk = scanner();
 		assign();
+
+		if (tk.type == SEMICOLONTK) {
+			tk = scanner();
+
+			return;
+		}
+		else {
+			error(tk, SEMICOLONTK);
+		}
 	}
 	else if (tk.type == JUMPTK) {
 		tk = scanner();
 		gotoFunc();
+
+		if (tk.type == SEMICOLONTK) {
+			tk = scanner();
+			
+			return;
+		}
+		else {
+			error(tk, SEMICOLONTK);
+		}
 	}
 	else if (tk.type == LABELTK) {
 		tk = scanner();
 		label();
+
+		if (tk.type == SEMICOLONTK) {
+			tk = scanner();
+			
+			return;
+		}
+		else {
+			error(tk, SEMICOLONTK);
+		}
+	}
+	else {
+		std::cout << "got here somehow\n";
 	}
 }
 
 void in() {
 	std::cout << "in called \n";
-	tk = scanner();
+	
 	if (tk.type == IDTK) {
 		tk = scanner();
 		return;
 	}
 	else {
+		std::cout << "Got here here1\n";
 		error(tk, IDTK);
 	}
 }
 
 void out() {
+	std::cout << "out called\n";
+	expr();
 
 }
 
@@ -304,22 +363,104 @@ void ifStat() {
 
 void loop() {
 
+	if (tk.type == LEFTBRACKETTK) {
+		tk = scanner();
+		expr();
+		RO();
+		expr();
+		if (tk.type == RIGHTBRACKETTK) {
+			tk = scanner();
+			stat();
+		}
+		else {
+			error(tk, RIGHTBRACKET);
+		}
+	}
+	else {
+		error(tk, LEFTBRACKET);
+	}
 }
 
 void assign() {
 
+	if (tk.type == IDTK) {
+		tk = scanner();
+
+		if (tk.type == EQUALTK) {
+			tk = scanner();
+			expr();
+		}
+		else {
+			error(tk, EQUALTK);
+		}
+	}
+	else {
+		error(tk, IDTK);
+	}
+
+}
+
+void RO() {
+
+	if (tk.type == GREATERTHANTK) {
+		tk = scanner();
+	}
+	else if (tk.type == LESSTHANTK) {
+		tk = scanner();
+	}
+	else if (tk.type == EQEQTK) {
+		tk = scanner();
+	}
+	else if (tk.type == LEFTBRACETK) {
+		tk = scanner();
+
+		if (tk.type == EQEQTK) {
+			tk = scanner();
+
+			if (tk.type == RIGHTBRACETK) {
+				tk = scanner();
+
+			}
+			else {
+				error(tk, RIGHTBRACETK);
+			}
+		}
+		else {
+			error(tk, EQEQTK);
+		}
+	}
+	else if (tk.type == MODULUSTK) {
+		tk = scanner();
+
+	}
+	else {
+		error(tk, GREATERTHANTK);
+	}
 }
 
 void gotoFunc() {
 
+	if (tk.type == IDTK) {
+		tk = scanner();
+	}
+	else {
+		error(tk, IDTK);
+	}
 }
 
 void label() {
-
+	
+	if (tk.type == IDTK) {
+		tk = scanner();
+	}
+	else {
+		error(tk, IDTK);
+	}
 }
 
 void error(token errorTk, int expectedToken) {
 	std::cout << "Parser Error: There is an error! \n";
-	std::cout << "Parser Error: ERROR in tk " <<errorTk.type<< " expected " << expectedTokens[tk.type] << 
+	std::cout << "Parser Error: ERROR in tk " << expectedTokens[errorTk.type] << " expected " << expectedTokens[expectedToken] <<
 		" in line " << tk.lineNum << "\n";
+	exit(1);
 }
