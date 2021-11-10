@@ -1,10 +1,10 @@
 CC=gcc
 CFLAGS= -I -g -lstdc++ -std=c++11
 
-scanner: main.cpp scanner.cpp scanner.hpp character.hpp token.hpp parser.cpp parser.hpp
+parser: main.cpp scanner.cpp scanner.hpp character.hpp token.hpp parser.cpp parser.hpp
 	$(CC) -o $@ $^ $(CFLAGS)
 
 clean:
-	rm -f *.o scanner
+	rm -f *.o parser
 	rm -f *.gch
 	rm fileCreated.txt

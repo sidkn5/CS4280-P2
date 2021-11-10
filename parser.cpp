@@ -45,9 +45,9 @@ void parser() {
 		exit(1);
 		//end
 	}
-	else {
-		error(tk, PROGRAMTK);
-	}
+	//else {
+	//	error(tk, PROGRAMTK);
+	//}
 }
 
 // <vars> program <block>
@@ -168,7 +168,8 @@ void A() {
 		A();
 	}
 	else {
-		error(tk, MINUSTK);
+		//error(tk, MINUSTK);
+		return;
 	}
 }
 
@@ -218,7 +219,7 @@ void stats() {
 	mStat();
 }
 
-
+//<mStat> -> empty |  <stat>  <mStat>
 void mStat() {
 	
 	std::cout << "mstat called \n";
@@ -338,6 +339,7 @@ void stat() {
 	}
 }
 
+//<in>->listen  Identifier
 void in() {
 	std::cout << "in called \n";
 	
@@ -351,16 +353,47 @@ void in() {
 	}
 }
 
+
+//<out> -> talk <expr>
 void out() {
 	std::cout << "out called\n";
 	expr();
-
 }
 
 void ifStat() {
 
+	if (tk.type == LEFTBRACKETTK) {
+		tk = scanner();
+
+		expr();
+		RO();
+		expr();
+		if (tk.type == RIGHTBRACKETTK) {
+			tk = scanner();
+			
+			if (tk.type == THENTK) {
+				tk = scanner();
+				stat();
+
+				if (tk.type == ELSETK) {
+					tk = scanner();
+					stat();
+				}
+			}
+			else {
+				error(tk, THENTK);
+			}
+		}
+		else {
+			error(tk, RIGHTBRACKET);
+		}
+
+	}
+
 }
 
+
+// <loop> -> while[<expr> <RO> <expr>]  <stat>
 void loop() {
 
 	if (tk.type == LEFTBRACKETTK) {
@@ -381,6 +414,8 @@ void loop() {
 	}
 }
 
+
+//<assign> -> assign Identifier  = <expr>  
 void assign() {
 
 	if (tk.type == IDTK) {
@@ -400,6 +435,8 @@ void assign() {
 
 }
 
+
+//<RO> -> > | < | == | { == }  (three tokens) | %
 void RO() {
 
 	if (tk.type == GREATERTHANTK) {
@@ -438,6 +475,8 @@ void RO() {
 	}
 }
 
+
+//<goto> -> jump Identifier
 void gotoFunc() {
 
 	if (tk.type == IDTK) {
@@ -448,6 +487,8 @@ void gotoFunc() {
 	}
 }
 
+
+//<label> -> label Identifier
 void label() {
 	
 	if (tk.type == IDTK) {
