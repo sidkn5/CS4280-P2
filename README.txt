@@ -2,26 +2,15 @@ Student: Sean Dela Pena
 Professor: Mark Hauschild
 Assignment: Project 2 - CS 4280
 	Parser
-Date: 11/12/21
+Date: 11/13/21
 
-OPTION 3: FSA table with FSA Driver, the table and the driver will be found in scanner.cpp file.
-
-USAGE: make		(makefile to compile, creates a scanner executable)
-	./scanner [somefile] [keyboard input] [< somefile]
+USAGE: make		(makefile to compile, creates a parser executable)
+	./parser [somefile]
 	make clean	
 
-Three example invocations:
-	./scanner somefile.txt [enter]
+Invocation:
+	./parser somefile.txt [enter]
 
-	./scanner [enter]
-	this 
-	is an 
-	example
-	of keyboard
-	input
-	[ctrl + d]
-
-	./scanner < somefile.txt [enter]
 
 Any other invocations will result in an error.
 
@@ -30,17 +19,14 @@ Notes:
 	[token, "string", line num:charNum]
 	["IDTk, "example, line 1:1]
 
+	The error structure is as shown
+	Parser Error: There is an error!
+	Parser Error: ERROR in tk [tokenthatwaschecked] expected [expectedToken] in line [lineNum]
+
 Important:
-	FSA table with FSA Driver, the table and the driver will be found in scanner.cpp file.
-
-	The testScanner can be found in scanner.cpp file. The way the program works
-	is that main.cpp, processes the arguments, then calls the testScanner function. The
-	testScanner function then calls the fsaDriver to get the tokens and calls the
-	printTokenVector to print out the tokens.
-
-	The FSA driver goes through the file line by line. It filters that line (get rid of comments
-	and check for invalid characters). Once the line is filtered and no errors are found it tokenizes
-	every string in that line and pushes it in a vector. It does that process until EOF and returns 
-	the tokens. Now all that is left to do is for the testScanner to call the print function.
-
-	The FSA driver is highly based on the pseudocode given in the powerpoint.
+	The way the program works is when the parser is called with a file parameter,
+	it checks if the file exists, if it does, continue. getAllTokens is called which
+	calls the testScanner that runs the FSADriver to get a vector of all the tokens 
+	in the file. A scanner() function is made inside parser.cpp which pops the tokens
+	one by one every time it is called. The rest is pretty much the same with how the pseudocode
+	works. Node root is set to parser once the parser completes, the tree is printed.

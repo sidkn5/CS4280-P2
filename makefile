@@ -7,4 +7,3 @@ parser: main.cpp scanner.cpp scanner.hpp character.hpp token.hpp parser.cpp pars
 clean:
 	rm -f *.o parser
 	rm -f *.gch
-	rm fileCreated.txt

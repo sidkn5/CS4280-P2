@@ -9,8 +9,8 @@
 #include "node.hpp"
 #include "tree.hpp"
 
-void getAllTokens(std::string filename);
-token scanner();		//holds all the tokens and returns the token that is being worked on
+void getAllTokens(std::string filename);		//gets all the tokens and stores it in a vector
+token scanner();								//returns the tokens one by one when it is called
 Node* parser();
 Node* program();
 Node* block();

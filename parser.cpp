@@ -1,30 +1,35 @@
 //Sean Dela Pena
 //File: parser.cpp
+//
+// Assignment P2 - Parser
+// Professor: Mark Hauschild
+// Class : CS 4280
+// Date : 11 - 13 - 21
 
 #include "parser.hpp"
 #include "scanner.hpp"
 #include "token.hpp"
 #include "node.hpp"
 
-static int index = -1;
+static int index = -1;			//index used to pop from the vector one at a time
 static token tk;
-//use myVector.at(index)
 std::string filename;
 std::vector<token> allTokens;
 
-
+//will be used for errors, expected tokens
 std::string expectedTokens[] = {
 	"HolderTk", "IDTk", "INTEGERTk", "WSTk", "EQUALTk", "EQEQTk", "GREATERTHANTk", "LESSTHANTk", "COLONTk",
 	"COLONEQTk", "PLUSTk", "MINUSTk", "MULTIPLYTk", "DIVIDETk", "MODULUSTk", "DOTTk", "LEFTPARENTK",
 	"RIGHTPARENTk", "COMMATk", "LEFTBRACETk", "RIGHTBRACETk", "SEMICOLONTk", "LEFTBRACKETTk", "RIGHTBRACKETTk",
 	"EOFTk", "KEYWORDTk", "STARTTk", "STOPTk", "LOOPTk", "WHILETk", "FORTk", "LABELTk", "EXITTk", "LISTENTk",
-	"TALKTk", "PROGRAMTk", "IFTk", "THENTk", "ASSIGNTk", "DECLARETk", "JUMPTk", "ELSETk"
+	"TALKTk", "PROGRAMTk", "IFTk", "THENTk", "ASSIGNTk", "DECLARETk", "JUMPTk", "ELSETk", "RELATIONALOPERATORTk"
 };
 
 void getAllTokens(std::string filename) {
 	allTokens = testScanner(filename);
 }
 
+//pop from the vector of tokens one at a time
 token scanner() {
 	index++;
 	//return tks.at(index);
@@ -49,15 +54,15 @@ Node* parser() {
 	}
 
 	return root;
-	//else {
-	//	error(tk, PROGRAMTK);
-	//}
+
 }
+
+/***********************     GRAMMAR FUNCTIONS    ***********************************/
 
 // <vars> program <block>
 Node* program() {
 	
-	std::cout << "Program called \n";
+	//std::cout << "Program called \n";
 	Node* node = getNode(PROGRAMNODE);
 	node->child1 = vars();
 
@@ -75,7 +80,7 @@ Node* program() {
 Node* block() {
 
 	Node* node = getNode(BLOCKNODE);
-	std::cout << "block called \n";
+	//std::cout << "block called \n";
 
 	if (tk.type == STARTTK) {
 		tk = scanner();
@@ -90,8 +95,7 @@ Node* block() {
 		}
 	}
 	else {
-		std::cout << "error here \n";
-		error(tk, STOPTK);
+		error(tk, STARTTK);		//expected start token
 	}
 
 	return NULL;
@@ -100,7 +104,7 @@ Node* block() {
 
 // empty | declare Identifier =  Integer  ;  <vars> 
 Node* vars() {
-	std::cout << "vars called \n";
+	//std::cout << "vars called \n";
 
 	Node* node = getNode(VARSNODE);
 
@@ -108,14 +112,14 @@ Node* vars() {
 		tk = scanner();
 
 		if (tk.type == IDTK) {
-			node->token1 = tk;
+			node->token1 = tk;			//consume IDTK
 			tk = scanner();
 
 			if (tk.type == EQUALTK) {
 				tk = scanner();
 
 				if (tk.type == INTEGERTK) {
-					node->token2 = tk;
+					node->token2 = tk;		//consume INTEGERTK
 					tk = scanner();
 
 					if (tk.type == SEMICOLONTK) {
@@ -124,19 +128,19 @@ Node* vars() {
 						return node;
 					}
 					else {
-						error(tk, SEMICOLONTK);	//expected semicolon
+						error(tk, SEMICOLONTK);	//expected semicolon token
 					}
 				}
 				else {
-					error(tk, INTEGERTK);	//expected integer
+					error(tk, INTEGERTK);	//expected integer token
 				}
 			}
 			else {
-				error(tk, EQUALTK);		//expected equal 
+				error(tk, EQUALTK);		//expected equal  token
 			}
 		}
 		else {
-			error(tk, IDTK);	//expected identifier
+			error(tk, IDTK);	//expected identifier token
 		}
 	}
 	else {
@@ -149,8 +153,8 @@ Node* vars() {
 //<expr> -> <N> + <expr>  | <N>
 Node* expr() {
 
-	Node* node = getNode(VARSNODE);
-	std::cout << "expr called \n";
+	Node* node = getNode(EXPRNODE);
+	//std::cout << "expr called \n";
 	node->child1 = N();
 	if (tk.type == PLUSTK) {
 		node->token1 = tk;
@@ -167,13 +171,13 @@ Node* expr() {
 
 //<N> -> <A> / <N> | <A> *<N> | <A>
 Node* N() {
-	std::cout << "N called \n";
+	//std::cout << "N called \n";
 
 	Node* node = getNode(NNODE);
 	node->child1 = A();
 
 	if (tk.type == DIVIDETK || tk.type == MULTIPLYTK) {
-		node->token1 = tk;
+		node->token1 = tk;			//consume operator
 		tk = scanner();
 		node->child2 = N();
 	}
@@ -187,17 +191,16 @@ Node* N() {
 
 //<A> -> <M>-<A> | <M>
 Node* A() {
-	std::cout << "A called \n";
+	//std::cout << "A called \n";
 	Node* node = getNode(ANODE);
 	node->child1 = M();
 
 	if (tk.type == MINUSTK) {
-		node->token1 = tk;
+		node->token1 = tk;	//consume operator
 		tk = scanner();
 		node->child2 = A();
 	}
 	else {
-		//error(tk, MINUSTK);
 		return node;
 	}
 
@@ -209,7 +212,7 @@ Node* M() {
 
 	Node* node = getNode(MNODE);
 	if (tk.type == DOTTK) {
-		node->token1 = tk;
+		node->token1 = tk;			//consume operator
 		tk = scanner();
 		node->child1 = M();
 		return node;
@@ -239,12 +242,12 @@ Node* R() {
 		}
 	}
 	else if (tk.type == IDTK) {
-		node->token1 = tk;
+		node->token1 = tk;		//consume operator
 		tk = scanner();
 		return node;
 	}
 	else if (tk.type == INTEGERTK) {
-		node->token1 = tk;
+		node->token1 = tk;		//consume operator
 		tk = scanner();
 		return node;
 	}
@@ -257,7 +260,7 @@ Node* R() {
 
 //<stats> -> <stat>  <mStat>
 Node* stats() {
-	std::cout << "stats called \n";
+	//std::cout << "stats called \n";
 
 	Node* node = getNode(STATSNODE);
 	node->child1 = stat();
@@ -269,7 +272,7 @@ Node* stats() {
 //<mStat> -> empty |  <stat>  <mStat>
 Node* mStat() {
 	
-	std::cout << "mstat called \n";
+	//std::cout << "mstat called \n";
 
 	Node* node = getNode(MSTATNODE);
 	if (tk.type == LISTENTK || tk.type == TALKTK || tk.type == STARTTK || tk.type == IFTK || tk.type == WHILETK 
@@ -280,7 +283,7 @@ Node* mStat() {
 		return node;
 	}
 	else {
-		//is this NULL?
+		//mstat can be empty
 		return node;
 	}
 
@@ -288,15 +291,12 @@ Node* mStat() {
 
 
 Node* stat() {
-	std::cout << "stat called \n";
+	//std::cout << "stat called \n";
 
 	Node* node = getNode(STATNODE);
 	if (tk.type == LISTENTK) {
 		tk = scanner();
 		node->child1 = in();
-		
-		//std::cout << "[2" << expectedTokens[tk.type] << ", \"" << tk.tokenString
-		//	<< "\", line " << tk.lineNum << ":" << tk.charNum << "]" << std::endl;
 
 		if (tk.type == SEMICOLONTK) {
 			tk = scanner();
@@ -304,7 +304,7 @@ Node* stat() {
 			return node;
 		}
 		else {
-			error(tk, SEMICOLONTK);
+			error(tk, SEMICOLONTK);		//expected semicolon token
 			return NULL;
 		}
 	}
@@ -318,13 +318,15 @@ Node* stat() {
 			return node;
 		}
 		else {
-			error(tk, SEMICOLONTK);
+			error(tk, SEMICOLONTK);		//expected semicolon token
 		}
 	} 
 	else if (tk.type == STARTTK) {
-		//tk = scanner();
+	
 		node->child1 = block();
 		return node;
+
+		//don't check for semicolon
 
 	}
 	else if (tk.type == IFTK) {
@@ -337,7 +339,7 @@ Node* stat() {
 			return node;
 		}
 		else {
-			error(tk, SEMICOLONTK);
+			error(tk, SEMICOLONTK);		//expected semicolon token
 			return NULL;
 		}
 	}
@@ -351,7 +353,7 @@ Node* stat() {
 			return node;
 		}
 		else {
-			error(tk, SEMICOLONTK);
+			error(tk, SEMICOLONTK);		//expected semicolon token
 			return NULL;
 		}
 	}
@@ -365,7 +367,7 @@ Node* stat() {
 			return node;
 		}
 		else {
-			error(tk, SEMICOLONTK);
+			error(tk, SEMICOLONTK);		//expected semicolon token
 			return NULL;
 		}
 	}
@@ -379,7 +381,7 @@ Node* stat() {
 			return node;
 		}
 		else {
-			error(tk, SEMICOLONTK);
+			error(tk, SEMICOLONTK);		//expected semicolon token
 			return NULL;
 		}
 	}
@@ -393,12 +395,12 @@ Node* stat() {
 			return node;
 		}
 		else {
-			error(tk, SEMICOLONTK);
+			error(tk, SEMICOLONTK);		//expected semicolon token
 			return NULL;
 		}
 	}
 	else {
-		std::cout << "got here somehow\n";
+		//should not be able to reach here
 		return NULL;
 	}
 
@@ -407,17 +409,17 @@ Node* stat() {
 
 //<in>->listen  Identifier
 Node* in() {
-	std::cout << "in called \n";
+	//std::cout << "in called \n";
 
 	Node* node = getNode(INNODE);
 	
 	if (tk.type == IDTK) {
-		node->token1 = tk;
+		node->token1 = tk;		//consume ID token
 		tk = scanner();
 		return node;
 	}
 	else {
-		error(tk, IDTK);
+		error(tk, IDTK);		//expected ID token
 		return NULL;
 	}
 }
@@ -425,13 +427,15 @@ Node* in() {
 
 //<out> -> talk <expr>
 Node* out() {
-	std::cout << "out called\n";
+	//std::cout << "out called\n";
 	Node* node = getNode(OUTNODE);
 	
 	node->child1 = expr();
 	return node;
 }
 
+
+//hits 5 children
 Node* ifStat() {
 
 	Node* node = getNode(IFSTATNODE);
@@ -456,18 +460,18 @@ Node* ifStat() {
 				return node;
 			}
 			else {
-				error(tk, THENTK);
+				error(tk, THENTK);		//expected THENTK
 				return NULL;
 			}
 		}
 		else {
-			error(tk, RIGHTBRACKET);
+			error(tk, RIGHTBRACKETTK);	//expected RIGHTBRACKET token
 			return NULL;
 		}
 
 	}
 	else {
-		error(tk, LEFTBRACKET);
+		error(tk, LEFTBRACKETTK);		//expected LEFTBRACKET token
 		return NULL;
 	}
 
@@ -476,7 +480,7 @@ Node* ifStat() {
 
 // <loop> -> while[<expr> <RO> <expr>]  <stat>
 Node* loop() {
-	std::cout << "loop called \n";
+	//std::cout << "loop called \n";
 	Node* node = getNode(LOOPNODE);
 
 	if (tk.type == LEFTBRACKETTK) {
@@ -490,12 +494,12 @@ Node* loop() {
 			return node;
 		}
 		else {
-			error(tk, RIGHTBRACKET);
+			error(tk, RIGHTBRACKET);		//expected RIGHTBRACKET token
 			return NULL;
 		}
 	}
 	else {
-		error(tk, LEFTBRACKET);
+		error(tk, LEFTBRACKET);				//expected LEFTBRACKET token
 		return NULL;
 	}
 
@@ -505,11 +509,11 @@ Node* loop() {
 
 //<assign> -> assign Identifier  = <expr>  
 Node* assign() {
-	std::cout << "assign called \n";
+	//std::cout << "assign called \n";
 
-	Node* node = getNode(LOOPNODE);
+	Node* node = getNode(ASSIGNNODE);
 	if (tk.type == IDTK) {
-		node->token1 = tk;
+		node->token1 = tk;			//consume ID token
 		tk = scanner();
 
 		if (tk.type == EQUALTK) {
@@ -518,11 +522,11 @@ Node* assign() {
 
 		}
 		else {
-			error(tk, EQUALTK);
+			error(tk, EQUALTK);		//expected EQUAL token
 		}
 	}
 	else {
-		error(tk, IDTK);
+		error(tk, IDTK);		//expected ID token
 	}
 
 	return NULL;
@@ -532,23 +536,23 @@ Node* assign() {
 
 //<RO> -> > | < | == | { == }  (three tokens) | %
 Node* RO() {
-	std::cout << "RO called\n";
+	//std::cout << "RO called\n";
 	Node* node = getNode(RONODE);
 
 	if (tk.type == GREATERTHANTK) {
-		node->token1 = tk;
+		node->token1 = tk;			//consume operation
 		tk = scanner();
 
 		return node;
 	}
 	else if (tk.type == LESSTHANTK) {
-		node->token1 = tk;
+		node->token1 = tk;			//consume operation
 		tk = scanner();
 
 		return node;
 	}
 	else if (tk.type == EQEQTK) {
-		node->token1 = tk;
+		node->token1 = tk;			//consume operation
 		tk = scanner();
 
 		return node;
@@ -557,15 +561,16 @@ Node* RO() {
 		tk = scanner();
 
 		if (tk.type == EQEQTK) {
-			node->token1 = tk;
+			node->token1 = tk;		//consume operation
 			tk = scanner();
 
 			if (tk.type == RIGHTBRACETK) {
 				tk = scanner();
+				return node;
 
 			}
 			else {
-				error(tk, RIGHTBRACETK);
+				error(tk, RIGHTBRACETK);		//expected RIGHTBRACKET token
 				return NULL;
 			}
 		}
@@ -575,13 +580,13 @@ Node* RO() {
 		}
 	}
 	else if (tk.type == MODULUSTK) {
-		node->token1 = tk;
+		node->token1 = tk;			//consume operation
 		tk = scanner();
 		return node;
 
 	}
 	else {
-		error(tk, GREATERTHANTK);
+		error(tk, RELATIONALOPERATORTK);
 		return NULL;
 	}
 
@@ -592,18 +597,18 @@ Node* RO() {
 //<goto> -> jump Identifier
 Node* gotoFunc() {
 
-	std::cout << "goto called\n";
+	//std::cout << "goto called\n";
 
 	Node* node = getNode(GOTOFUNCNODE);
 
 	if (tk.type == IDTK) {
-		node->token1 = tk;
+		node->token1 = tk;		//consume ID token
 		tk = scanner();
 
 		return node;
 	}
 	else {
-		error(tk, IDTK);
+		error(tk, IDTK);		//expected ID token
 		return NULL;
 	}
 }
@@ -611,23 +616,24 @@ Node* gotoFunc() {
 
 //<label> -> label Identifier
 Node* label() {
-	std::cout << "label called\n";
-	Node* node = getNode(GOTOFUNCNODE);
+	//std::cout << "label called\n";
+	Node* node = getNode(LABELNODE);
 
 	if (tk.type == IDTK) {
-		node->token1 = tk;
+		node->token1 = tk;		//consume ID token
 		tk = scanner();
 		return node;
 	}
 	else {
-		error(tk, IDTK);
+		error(tk, IDTK);		//expected ID token
 		return NULL;
 	}
 }
 
+
 void error(token errorTk, int expectedToken) {
 	std::cout << "Parser Error: There is an error! \n";
 	std::cout << "Parser Error: ERROR in tk " << expectedTokens[errorTk.type] << " expected " << expectedTokens[expectedToken] <<
-		" in line " << tk.lineNum << "\n";
+		" in line " << errorTk.lineNum << "\n";
 	exit(1);
 }

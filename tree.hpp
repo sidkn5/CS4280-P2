@@ -15,6 +15,6 @@ enum nodeType {
 
 //
 Node* getNode(int nodeType);
-void printNode(Node* node, int depth, int indent);
+void printNode(Node* node, int depth);
 
 #endif
