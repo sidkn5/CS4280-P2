@@ -4,10 +4,11 @@
 #include "parser.hpp"
 #include "scanner.hpp"
 #include "token.hpp"
+#include "node.hpp"
 
 static int index = -1;
 static token tk;
-//use myVector.at(vectorIndex)
+//use myVector.at(index)
 std::string filename;
 std::vector<token> allTokens;
 
@@ -28,54 +29,61 @@ token scanner() {
 	index++;
 	//return tks.at(index);
 
-
-	std::cout << "[" << expectedTokens[allTokens[index].type] << ", \"" << allTokens[index].tokenString
-		<< "\", line " << allTokens[index].lineNum << ":" << allTokens[index].charNum << "]" << std::endl;
+	//std::cout << "[" << expectedTokens[allTokens[index].type] << ", \"" << allTokens[index].tokenString
+		//<< "\", line " << allTokens[index].lineNum << ":" << allTokens[index].charNum << "]" << std::endl;
 
 
 	return allTokens.at(index);
 }
 
-void parser() {
+Node* parser() {
+
+	Node* root;
 
 	tk = scanner();
-	program();
+	root = program();
 	if (tk.type == EOFTK) {
 		std::cout << "Parser Completed/Passed\n";
-		exit(1);
+		//exit(1);
 		//end
 	}
+
+	return root;
 	//else {
 	//	error(tk, PROGRAMTK);
 	//}
 }
 
 // <vars> program <block>
-void program() {
-
+Node* program() {
+	
 	std::cout << "Program called \n";
-	vars();
+	Node* node = getNode(PROGRAMNODE);
+	node->child1 = vars();
 
 	if (tk.type == PROGRAMTK) {
 		tk = scanner();
-		block();
+		node->child2 = block();
 	}
 	else {
 		error(tk, PROGRAMTK);
 	}
+	return node;
 }
 
 //start <vars> <stats> stop
-void block() {
+Node* block() {
 
+	Node* node = getNode(BLOCKNODE);
 	std::cout << "block called \n";
+
 	if (tk.type == STARTTK) {
 		tk = scanner();
-		vars();
-		stats();
+		node->child1 = vars();
+		node->child2 = stats();
 		if (tk.type == STOPTK) {
 			tk = scanner();
-			return;
+			return node;
 		}
 		else {
 			error(tk, STOPTK);
@@ -85,27 +93,35 @@ void block() {
 		std::cout << "error here \n";
 		error(tk, STOPTK);
 	}
+
+	return NULL;
 }
 
 
 // empty | declare Identifier =  Integer  ;  <vars> 
-void vars() {
+Node* vars() {
 	std::cout << "vars called \n";
+
+	Node* node = getNode(VARSNODE);
+
 	if (tk.type == DECLARETK) {
 		tk = scanner();
 
 		if (tk.type == IDTK) {
+			node->token1 = tk;
 			tk = scanner();
 
 			if (tk.type == EQUALTK) {
 				tk = scanner();
 
 				if (tk.type == INTEGERTK) {
+					node->token2 = tk;
 					tk = scanner();
 
 					if (tk.type == SEMICOLONTK) {
 						tk = scanner();
-						vars();
+						node->child1 = vars();
+						return node;
 					}
 					else {
 						error(tk, SEMICOLONTK);	//expected semicolon
@@ -124,73 +140,96 @@ void vars() {
 		}
 	}
 	else {
-		return;	//vars can be empty
+		return node;	//vars can be empty
 	}
+
+	return node;
 }
 
 //<expr> -> <N> + <expr>  | <N>
-void expr() {
+Node* expr() {
+
+	Node* node = getNode(VARSNODE);
 	std::cout << "expr called \n";
-	N();
+	node->child1 = N();
 	if (tk.type == PLUSTK) {
+		node->token1 = tk;
 		tk = scanner();
-		expr();
+		node->child2 = expr();
 
 	}
 	else {
-		return;
+		return node;
 	}
+	return node;
 
 }
 
 //<N> -> <A> / <N> | <A> *<N> | <A>
-void N() {
+Node* N() {
 	std::cout << "N called \n";
-	A();
+
+	Node* node = getNode(NNODE);
+	node->child1 = A();
 
 	if (tk.type == DIVIDETK || tk.type == MULTIPLYTK) {
+		node->token1 = tk;
 		tk = scanner();
-		N();
+		node->child2 = N();
 	}
 	else {
-		return;
+		return node;
 	}
+
+	return node;
 }
 
 
 //<A> -> <M>-<A> | <M>
-void A() {
+Node* A() {
 	std::cout << "A called \n";
-	M();
+	Node* node = getNode(ANODE);
+	node->child1 = M();
 
 	if (tk.type == MINUSTK) {
+		node->token1 = tk;
 		tk = scanner();
-		A();
+		node->child2 = A();
 	}
 	else {
 		//error(tk, MINUSTK);
-		return;
+		return node;
 	}
+
+	return node;
 }
 
-//not done
 //<M> -> . <M> | <R>
-void M() {
+Node* M() {
+
+	Node* node = getNode(MNODE);
 	if (tk.type == DOTTK) {
+		node->token1 = tk;
 		tk = scanner();
-		M();
+		node->child1 = M();
+		return node;
 	}
 	else {
-		R();
+		node->child1 = R();
+		return node;
 	}
+
+	return node;
 }
 
 
 //<R> -> ( <expr> ) | Identifier | Integer
-void R() {
+Node* R() {
+
+	Node* node = getNode(RNODE);
 	if (tk.type == LEFTPARENTK) {
 		tk = scanner();
-		expr();
+		node->child1 = expr();
 
 		if (tk.type == RIGHTPARENTK) {
 			tk = scanner();
@@ -200,65 +239,83 @@ void R() {
 		}
 	}
 	else if (tk.type == IDTK) {
+		node->token1 = tk;
 		tk = scanner();
-		return;
+		return node;
 	}
 	else if (tk.type == INTEGERTK) {
+		node->token1 = tk;
 		tk = scanner();
-		return;
+		return node;
 	}
 	else {
-		return;
+		return node;
 	}
+
+	return NULL;
 }
 
 //<stats> -> <stat>  <mStat>
-void stats() {
+Node* stats() {
 	std::cout << "stats called \n";
-	stat();
-	mStat();
+
+	Node* node = getNode(STATSNODE);
+	node->child1 = stat();
+	node->child2 = mStat();
+
+	return node;
 }
 
 //<mStat> -> empty |  <stat>  <mStat>
-void mStat() {
+Node* mStat() {
 	
 	std::cout << "mstat called \n";
+
+	Node* node = getNode(MSTATNODE);
 	if (tk.type == LISTENTK || tk.type == TALKTK || tk.type == STARTTK || tk.type == IFTK || tk.type == WHILETK 
 		|| tk.type == ASSIGNTK || tk.type == JUMPTK || tk.type == LABELTK) {
-		stat();
-		mStat();
+		node->child1 = stat();
+		node->child2 = mStat();
+
+		return node;
 	}
 	else {
-		return;
+		//is this NULL?
+		return node;
 	}
 
 }
 
-void stat() {
+
+Node* stat() {
 	std::cout << "stat called \n";
+
+	Node* node = getNode(STATNODE);
 	if (tk.type == LISTENTK) {
 		tk = scanner();
-		in();
+		node->child1 = in();
 		
 		//std::cout << "[2" << expectedTokens[tk.type] << ", \"" << tk.tokenString
 		//	<< "\", line " << tk.lineNum << ":" << tk.charNum << "]" << std::endl;
+
 		if (tk.type == SEMICOLONTK) {
 			tk = scanner();
 			
-			return;
+			return node;
 		}
 		else {
 			error(tk, SEMICOLONTK);
+			return NULL;
 		}
 	}
 	else if (tk.type == TALKTK) {
 		tk = scanner();
-		out();
+		node->child1 = out();
 
 		if (tk.type == SEMICOLONTK) {
 			tk = scanner();
 
-			return;
+			return node;
 		}
 		else {
 			error(tk, SEMICOLONTK);
@@ -266,164 +323,199 @@ void stat() {
 	} 
 	else if (tk.type == STARTTK) {
 		//tk = scanner();
-		block();
+		node->child1 = block();
+		return node;
 
 	}
 	else if (tk.type == IFTK) {
 		tk = scanner();
-		ifStat();
+		node->child1 = ifStat();
 
 		if (tk.type == SEMICOLONTK) {
 			tk = scanner();
 
-			return;
+			return node;
 		}
 		else {
 			error(tk, SEMICOLONTK);
+			return NULL;
 		}
 	}
 	else if (tk.type == WHILETK) {
 		tk = scanner();
-		loop();
+		node->child1 = loop();
 
 		if (tk.type == SEMICOLONTK) {
 			tk = scanner();
 
-			return;
+			return node;
 		}
 		else {
 			error(tk, SEMICOLONTK);
+			return NULL;
 		}
 	}
 	else if (tk.type == ASSIGNTK) {
 		tk = scanner();
-		assign();
+		node->child1 = assign();
 
 		if (tk.type == SEMICOLONTK) {
 			tk = scanner();
 
-			return;
+			return node;
 		}
 		else {
 			error(tk, SEMICOLONTK);
+			return NULL;
 		}
 	}
 	else if (tk.type == JUMPTK) {
 		tk = scanner();
-		gotoFunc();
+		node->child1 = gotoFunc();
 
 		if (tk.type == SEMICOLONTK) {
 			tk = scanner();
 			
-			return;
+			return node;
 		}
 		else {
 			error(tk, SEMICOLONTK);
+			return NULL;
 		}
 	}
 	else if (tk.type == LABELTK) {
 		tk = scanner();
-		label();
+		node->child1 = label();
 
 		if (tk.type == SEMICOLONTK) {
 			tk = scanner();
 			
-			return;
+			return node;
 		}
 		else {
 			error(tk, SEMICOLONTK);
+			return NULL;
 		}
 	}
 	else {
 		std::cout << "got here somehow\n";
+		return NULL;
 	}
+
+	return NULL;
 }
 
 //<in>->listen  Identifier
-void in() {
+Node* in() {
 	std::cout << "in called \n";
+
+	Node* node = getNode(INNODE);
 	
 	if (tk.type == IDTK) {
+		node->token1 = tk;
 		tk = scanner();
-		return;
+		return node;
 	}
 	else {
-		std::cout << "Got here here1\n";
 		error(tk, IDTK);
+		return NULL;
 	}
 }
 
 
 //<out> -> talk <expr>
-void out() {
+Node* out() {
 	std::cout << "out called\n";
-	expr();
+	Node* node = getNode(OUTNODE);
+	
+	node->child1 = expr();
+	return node;
 }
 
-void ifStat() {
+Node* ifStat() {
 
+	Node* node = getNode(IFSTATNODE);
 	if (tk.type == LEFTBRACKETTK) {
 		tk = scanner();
 
-		expr();
-		RO();
-		expr();
+		node->child1 = expr();
+		node->child2 = RO();
+		node->child3 = expr();
+
 		if (tk.type == RIGHTBRACKETTK) {
 			tk = scanner();
 			
 			if (tk.type == THENTK) {
 				tk = scanner();
-				stat();
+				node->child4 = stat();
 
 				if (tk.type == ELSETK) {
 					tk = scanner();
-					stat();
+					node->child5 = stat();
 				}
+				return node;
 			}
 			else {
 				error(tk, THENTK);
+				return NULL;
 			}
 		}
 		else {
 			error(tk, RIGHTBRACKET);
+			return NULL;
 		}
 
+	}
+	else {
+		error(tk, LEFTBRACKET);
+		return NULL;
 	}
 
 }
 
 
 // <loop> -> while[<expr> <RO> <expr>]  <stat>
-void loop() {
+Node* loop() {
+	std::cout << "loop called \n";
+	Node* node = getNode(LOOPNODE);
 
 	if (tk.type == LEFTBRACKETTK) {
 		tk = scanner();
-		expr();
-		RO();
-		expr();
+		node->child1 = expr();
+		node->child2 = RO();
+		node->child3 = expr();
 		if (tk.type == RIGHTBRACKETTK) {
 			tk = scanner();
-			stat();
+			node->child4 = stat();
+			return node;
 		}
 		else {
 			error(tk, RIGHTBRACKET);
+			return NULL;
 		}
 	}
 	else {
 		error(tk, LEFTBRACKET);
+		return NULL;
 	}
+
+	return NULL;
 }
 
 
 //<assign> -> assign Identifier  = <expr>  
-void assign() {
+Node* assign() {
+	std::cout << "assign called \n";
 
+	Node* node = getNode(LOOPNODE);
 	if (tk.type == IDTK) {
+		node->token1 = tk;
 		tk = scanner();
 
 		if (tk.type == EQUALTK) {
 			tk = scanner();
-			expr();
+			node->child1 = expr();
+
 		}
 		else {
 			error(tk, EQUALTK);
@@ -433,25 +525,39 @@ void assign() {
 		error(tk, IDTK);
 	}
 
+	return NULL;
+
 }
 
 
 //<RO> -> > | < | == | { == }  (three tokens) | %
-void RO() {
+Node* RO() {
+	std::cout << "RO called\n";
+	Node* node = getNode(RONODE);
 
 	if (tk.type == GREATERTHANTK) {
+		node->token1 = tk;
 		tk = scanner();
+
+		return node;
 	}
 	else if (tk.type == LESSTHANTK) {
+		node->token1 = tk;
 		tk = scanner();
+
+		return node;
 	}
 	else if (tk.type == EQEQTK) {
+		node->token1 = tk;
 		tk = scanner();
+
+		return node;
 	}
 	else if (tk.type == LEFTBRACETK) {
 		tk = scanner();
 
 		if (tk.type == EQEQTK) {
+			node->token1 = tk;
 			tk = scanner();
 
 			if (tk.type == RIGHTBRACETK) {
@@ -460,42 +566,62 @@ void RO() {
 			}
 			else {
 				error(tk, RIGHTBRACETK);
+				return NULL;
 			}
 		}
 		else {
 			error(tk, EQEQTK);
+			return NULL;
 		}
 	}
 	else if (tk.type == MODULUSTK) {
+		node->token1 = tk;
 		tk = scanner();
+		return node;
 
 	}
 	else {
 		error(tk, GREATERTHANTK);
+		return NULL;
 	}
+
+	return NULL;
 }
 
 
 //<goto> -> jump Identifier
-void gotoFunc() {
+Node* gotoFunc() {
+
+	std::cout << "goto called\n";
+
+	Node* node = getNode(GOTOFUNCNODE);
 
 	if (tk.type == IDTK) {
+		node->token1 = tk;
 		tk = scanner();
+
+		return node;
 	}
 	else {
 		error(tk, IDTK);
+		return NULL;
 	}
 }
 
 
 //<label> -> label Identifier
-void label() {
-	
+Node* label() {
+	std::cout << "label called\n";
+	Node* node = getNode(GOTOFUNCNODE);
+
 	if (tk.type == IDTK) {
+		node->token1 = tk;
 		tk = scanner();
+		return node;
 	}
 	else {
 		error(tk, IDTK);
+		return NULL;
 	}
 }
 

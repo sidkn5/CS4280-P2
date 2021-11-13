@@ -10,6 +10,7 @@
 
 #include "scanner.hpp"
 #include "parser.hpp"
+#include "tree.hpp"
 static token temp;
 
 int main(int argc, char* argv[]){
@@ -34,7 +35,8 @@ int main(int argc, char* argv[]){
 			//allTokens = testScanner(filename);
 			//printTokenVector(allTokens);
 			getAllTokens(filename);
-			parser();
+			Node* root = parser();
+			printNode(root, 0, 0);
 		}
 		else {
 			std::cout << "The file does not exist! Terminating...\n";
